@@ -14,8 +14,8 @@ private:
 	string genre;
 	string description;
 public:
-	movie();
-	~movie();
+	movie() = default;
+	~movie() = default;
 	int get_id() { return id; }
 	float get_rate() { return rate; }
 	string get_name() { return name; }
@@ -37,8 +37,8 @@ private:
 	int mov_id;
     string comment_text;
 public:
-	comment();
-	~comment();
+	comment() = default;
+	~comment() = default;
 	int get_user_id() { return us_id; }
 	int get_movie_id() { return us_id; }
 	string get_comment_text() { return comment_text; }
@@ -47,16 +47,11 @@ public:
 		mov_id = movie_id;
 		comment_text = text;
 	}
-	bool is_bad_comment(string text) {
-		text = comment_text;
-		if(/*Комментарий имеет нецензурную лексику*/) {
-			return TRUE;
-		} else {
-			return FALSE;
-		}
-	}
 };
 
-void selection(int top, string genre) {
-	//КАКОЙ-ТО КОД
+bool bad_comment(comment new_comment) {
+    //code
+    return true;
 }
+
+void selection(int top, string genre) {}
