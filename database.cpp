@@ -14,7 +14,7 @@ public:
 	ConnectorDb & operator= (const ConnectorDb&) = default;
 	virtual ~ConnectorDb() = default;
 	virtual void Add(const mapstr& data) = 0;
-	virtual void Delete(int id) = 0;
+	virtual void Delete(const string& table, int id) = 0;
 	virtual void Edit(const mapstr& newData) = 0;
 	virtual mapstr Get(const vecstr& cols) = 0;
 
@@ -25,7 +25,7 @@ public:
 	ConnectorMySql(const string& host, const string& usr, const string& psw, const string& db, const int port) { };
 	~ConnectorMySql() {};
 	void Add(const mapstr& data) override {};
-	void Delete(int id) override {};
+	void Delete(const string& table, int id) override {};
 	void Edit(const mapstr& newData) override {};
 	mapstr Get(const vecstr& cols) override {
 		mapstr m;
@@ -51,15 +51,28 @@ public:
 		*conn = ConnectorMySql(host, usr, psw, db, port);
 	}
 	~UserConnector() {};
-	void AddUser(int id, mapstr data);
-	void DeleteUser(int id);
-	void EditUser(int id, mapstr data);
-	mapstr GetUserInfo(int id, vecstr cols);
-	void EstimateFilm(int userid, int film, int estimate);
-	void CommentFilm(int userid, int filmid, string text);
-	void DeleteComment(int userid, int filmid);
-	mapstr GetUserEstimate(int id) ;
-	vecstr GetUsersId(string condition);
+	void AddUser(mapstr data) {};
+	void DeleteUser(int id) {};
+	void EditUser(int id, mapstr data) {};
+	mapstr GetUserInfo(int id, vecstr cols) {
+		mapstr m;
+		return m;
+	};
+	void EstimateFilm(int userid, int film, int estimate) {};
+	void CommentFilm(int userid, int filmid, string text) {};
+	vecstr GetCommentsFilm(int userid, int filmid) {
+		vecstr v;
+		return v;
+	};
+	void DeleteComment(int userid, int filmid) {};
+	mapstr GetUserEstimate(int id) {
+		mapstr m;
+		return m;
+	};
+	vecstr GetUsersId(string condition) {
+		vecstr v;
+		return v;
+	};
 private:
 	void AddUserPreference(mapstr data);
 	void EditUserPreference(mapstr data);

@@ -7,63 +7,144 @@
 // CONNECTORMYSQL
 
 TEST(ConnectorMySql_create, Assert_True) {
-  ConnectorMySql x("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  ConnectorMySql testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
   EXPECT_TRUE(true);
 }
 
-TEST(ConnectorMySql_Add, Assert_True) {
-  EXPECT_TRUE(true);
+TEST(ConnectorMySql_Add_Get, Assert_True) {
+  ConnectorMySql testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  mapstr data = {{"table","user"},
+    {"email", "mail@mail.ru"},
+    {"name", "Lionel Messi"},
+    {"password", "1899"}
+  };
+  testcon.Add(data);
+
+  vecstr columns = {"table", "email", "name", "password"};
+
+  mapstr result = testcon.Get(columns);
+
+  EXPECT_EQ(data, result);
+
+  //EXPECT_TRUE(true);
 }
 
 TEST(ConnectorMySql_Delete, Assert_True) {
-  EXPECT_TRUE(true);
+  ConnectorMySql testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  mapstr data = {{"table","user"},
+    {"email", "mail@mail.ru"},
+    {"name", "Lionel Messi"},
+    {"password", "1899"}
+  };
+  testcon.Add(data);
+  testcon.Delete("user", 1);
+  vecstr columns = {"table", "email", "name", "password"};
+  mapstr result = testcon.Get(columns);
+  mapstr exp = {};
+  EXPECT_EQ(exp, result);
 }
 
 TEST(ConnectorMySql_Edit, Assert_True) {
-  EXPECT_TRUE(true);
+  ConnectorMySql testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  mapstr data = {{"table","user"},
+    {"email", "mail@mail.ru"},
+    {"name", "Lionel Messi"},
+    {"password", "1899"}
+  };
+  mapstr newData = {{"table","user"}, {"name", "Leo"}};
+  testcon.Add(data);
+  testcon.Edit(newData);
+  vecstr columns = {"table", "name"};
+  mapstr result = testcon.Get(columns);
+  EXPECT_EQ("Leo", result["name"]);
 }
-
-TEST(ConnectorMySql_Get, Assert_True) {
-  EXPECT_TRUE(true);
-}
-
 
 
 // USERCONNECTION
 
 TEST(UserConnector_create, Assert_True) {
-  UserConnector x("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  UserConnector testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
   EXPECT_TRUE(true);
 }
 
 
-TEST(UserConnector_AddUser, Assert_True) {
+TEST(UserConnector_AddUser_GetUserInfo, Assert_True) {
+  UserConnector testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  mapstr data = {{"table","user"},
+    {"email", "mail@mail.ru"},
+    {"name", "Lionel Messi"},
+    {"password", "1899"}
+  };
+  testcon.AddUser(data);
+  vecstr columns = {"table", "email", "name", "password"};
+  mapstr result = testcon.GetUserInfo(1, columns);
+  EXPECT_EQ(data, result);
+}
+
+
+TEST(UserConnector_EditUser, Assert_True) {
+  UserConnector testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  mapstr data = {{"table","user"},
+    {"email", "mail@mail.ru"},
+    {"name", "Lionel Messi"},
+    {"password", "1899"}
+  };
+  testcon.AddUser(data);
+  mapstr newData = {{"table","user"}, {"name", "Leo"}};
+  testcon.EditUser(1, newData);
+  vecstr columns = {"name"};
+  mapstr result = testcon.GetUserInfo(1, columns);
+  EXPECT_EQ(data, result);
   EXPECT_TRUE(true);
 }
 
 
 TEST(UserConnector_DeleteUser, Assert_True) {
-  EXPECT_TRUE(true);
+  UserConnector testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  mapstr data = {{"table","user"},
+    {"email", "mail@mail.ru"},
+    {"name", "Lionel Messi"},
+    {"password", "1899"}
+  };
+  testcon.AddUser(data);
+  testcon.DeleteUser(1);
+  vecstr columns = {"table", "email", "name", "password"};
+  mapstr result = testcon.GetUserInfo(1, columns);
+  mapstr exp = {};
+  EXPECT_EQ(exp, result);
+  
 }
 
 
-TEST(UserConnector_EditUser, Assert_True) {
-  EXPECT_TRUE(true);
-}
-
-
-TEST(UserConnector_GetUserInfo, Assert_True) {
-  EXPECT_TRUE(true);
-}
-
-
-TEST(UserConnector_EstimateFilm, Assert_True) {
-  EXPECT_TRUE(true);
+TEST(UserConnector_EstimateFilm_GetEstimation, Assert_True) {
+  UserConnector testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  mapstr data = {{"table","user"},
+    {"email", "mail@mail.ru"},
+    {"name", "Lionel Messi"},
+    {"password", "1899"}
+  };
+  testcon.AddUser(data);
+  testcon.EstimateFilm(1, 1, 8);
+  testcon.EstimateFilm(1, 2, 7);
+  mapstr result = testcon.GetUserEstimate(1);
+  mapstr exp = {{"1", "8"}, {"2", "7"}};
+  EXPECT_EQ(exp, result);
 }
 
 
 TEST(UserConnector_CommentFilm, Assert_True) {
-  EXPECT_TRUE(true);
+  UserConnector testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  mapstr data = {{"table","user"},
+    {"email", "mail@mail.ru"},
+    {"name", "Lionel Messi"},
+    {"password", "1899"}
+  };
+  testcon.AddUser(data);
+  testcon.CommentFilm(1, 1, "comment1");
+  testcon.CommentFilm(1, 1, "comment2");
+  vecstr result = testcon.GetCommentsFilm(1, 1);
+  vecstr exp = {"comment1", "comment2"};
+  EXPECT_EQ(exp, result);
 }
 
 
@@ -142,16 +223,6 @@ TEST(FilmConnector_GetFilmsId, Assert_True) {
   EXPECT_TRUE(true);
 }
 
-/*
-
-
-	vecstr (int filmid) const;
-	void (int filmid, string genre);
-	vecstr (int filmid);
-	void (string name);
-	void (int id);
-	int (string name);
-*/
 
 TEST(FilmConnector_GetFilmGenre, Assert_True) {
   EXPECT_TRUE(true);
