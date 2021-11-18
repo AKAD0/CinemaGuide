@@ -60,7 +60,3 @@ public:
 void selection(int top, string genre) {
 	//КАКОЙ-ТО КОД
 }
-
-int main() {
-    return 0;
-}
