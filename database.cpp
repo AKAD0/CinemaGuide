@@ -50,7 +50,8 @@ public:
 		for (it = data.begin(); it != data.end(); it++) { 
 			sqlquery += it->first + ", ";
 		}
-		sqlquery += "):";
+		sqlquery.pop_back();
+		sqlquery += ");";
 
 		if (mysql_query(mysqlconn, sqlquery.c_str())) {
           fprintf(stderr, "%s\n", mysql_error(mysqlconn));
@@ -73,6 +74,7 @@ public:
 		for (it = newData.begin(); it != newData.end(); it++) { 
 			sqlquery += it->first +" = " + it->second + ", ";
 		}
+		sqlquery.pop_back();
 		sqlquery += ";";
 
 		if (mysql_query(mysqlconn, sqlquery.c_str())) {
@@ -83,11 +85,19 @@ public:
 	};
 	mapstr Get(vecstr& cols) override {
 		mapstr answer;
-		string sqlquery = "select ";// + " from " + cols[1] + " set ";
+		string sqlquery = "select ";// + " from " + cols[1] + ";"";
 		vecstr::iterator it;
 		for (it = cols.begin(); it != cols.end(); it++) { 
 			sqlquery += *it + ", ";
 		}
+		sqlquery.pop_back();
+		sqlquery += " from " + cols[1] + ";";
+
+		if (mysql_query(mysqlconn, sqlquery.c_str())) {
+          fprintf(stderr, "%s\n", mysql_error(mysqlconn));
+          exit(1);
+      	}
+		res = mysql_store_result(mysqlconn);
 		return answer;
 	};
 
