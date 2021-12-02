@@ -1,6 +1,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <mysql/mysql.h>
 using namespace std;
 
 
@@ -13,24 +14,87 @@ public:
 	ConnectorDb(const ConnectorDb&) = delete;
 	ConnectorDb & operator= (const ConnectorDb&) = default;
 	virtual ~ConnectorDb() = default;
-	virtual void Add(const mapstr& data) = 0;
+	virtual void Add(mapstr& data) = 0;
 	virtual void Delete(const string& table, int id) = 0;
-	virtual void Edit(const mapstr& newData) = 0;
-	virtual mapstr Get(const vecstr& cols) = 0;
+	virtual void Edit(mapstr& newData) = 0;
+	virtual mapstr Get(vecstr& cols) = 0;
 
 };
 
 class ConnectorMySql:public ConnectorDb {
 public:
-	ConnectorMySql(const string& host, const string& usr, const string& psw, const string& db, const int port) { };
-	~ConnectorMySql() {};
-	void Add(const mapstr& data) override {};
-	void Delete(const string& table, int id) override {};
-	void Edit(const mapstr& newData) override {};
-	mapstr Get(const vecstr& cols) override {
-		mapstr m;
-		return m;
+	ConnectorMySql(const string& host, const string& usr, const string& psw, const string& db, const int port) { 
+		mysqlconn = mysql_init(NULL);
+
+		// Connect to database 
+		if (!mysql_real_connect(mysqlconn, host.c_str(), usr.c_str(), psw.c_str(), db.c_str(), port, NULL, 0)) {
+			fprintf(stderr, "%s\n", mysql_error(mysqlconn));
+			exit(1);
+		}	
 	};
+	~ConnectorMySql() {
+		mysql_free_result(res);
+      	mysql_close(mysqlconn);
+
+	};
+	void Add(map<string, string>& data) override {
+		string sqlquery = "insert into " + data["table"] + " (";
+		mapstr :: iterator it;
+		
+		for (it = data.begin(); it != data.end(); it++) { 
+
+			sqlquery += it->first + ", ";
+		}
+		sqlquery += ") values (";
+
+		for (it = data.begin(); it != data.end(); it++) { 
+			sqlquery += it->first + ", ";
+		}
+		sqlquery += "):";
+
+		if (mysql_query(mysqlconn, sqlquery.c_str())) {
+          fprintf(stderr, "%s\n", mysql_error(mysqlconn));
+          exit(1);
+      }
+	};
+	void Delete(const string& table, int id) override {
+		string sqlquery = "delete " + table + " where id = " + std::to_string(id) + ";";
+		map<string, string> :: iterator it;
+		
+		if (mysql_query(mysqlconn, sqlquery.c_str())) {
+          fprintf(stderr, "%s\n", mysql_error(mysqlconn));
+          exit(1);
+      	}
+	};
+
+	void Edit(mapstr& newData) override {
+		string sqlquery = "update " + newData["tablename"] + " set ";
+		mapstr :: iterator it;
+		for (it = newData.begin(); it != newData.end(); it++) { 
+			sqlquery += it->first +" = " + it->second + ", ";
+		}
+		sqlquery += ";";
+
+		if (mysql_query(mysqlconn, sqlquery.c_str())) {
+          fprintf(stderr, "%s\n", mysql_error(mysqlconn));
+          exit(1);
+      	}
+
+	};
+	mapstr Get(vecstr& cols) override {
+		mapstr answer;
+		string sqlquery = "select ";// + " from " + cols[1] + " set ";
+		vecstr::iterator it;
+		for (it = cols.begin(); it != cols.end(); it++) { 
+			sqlquery += *it + ", ";
+		}
+		return answer;
+	};
+
+private:
+	MYSQL *mysqlconn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
 };
 
 
@@ -73,6 +137,8 @@ public:
 		vecstr v;
 		return v;
 	};
+
+	map<string, vector<string>> GetDataFrame() { };
 private:
 	void AddUserPreference(mapstr data);
 	void EditUserPreference(mapstr data);

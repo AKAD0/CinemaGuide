@@ -7,12 +7,12 @@
 // CONNECTORMYSQL
 
 TEST(ConnectorMySql_create, Assert_True) {
-  ConnectorMySql testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  ConnectorMySql testcon("localhost", "vladimir", "12345678", "Kinopoiskdata", 3306);
   EXPECT_TRUE(true);
 }
 
 TEST(ConnectorMySql_Add_Get, Assert_True) {
-  ConnectorMySql testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  ConnectorMySql testcon("localhost", "vladimir", "12345678", "Kinopoisdata", 3306);
   mapstr data = {{"table","user"},
     {"email", "mail@mail.ru"},
     {"name", "Lionel Messi"},
