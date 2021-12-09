@@ -56,16 +56,10 @@ public:
 		// Connect to the MySQL test database 
 		con->setSchema("Kinopoiskdata");
 		stmt = con->createStatement();
-		//prstmt = con->prepareStatement("SHOW DATABASES");
-		
-		
 		cout << "Created mysql\n";
 	};
-
-	//ConnectorMySql() = default;
 	
 	~ConnectorMySql() {
-		
 		cout << "NOT Closed\n";
 		if (res != nullptr) delete res;
 		delete stmt;
@@ -74,41 +68,42 @@ public:
 		cout << "Closed mysql\n";
 
 	};
+
 	int Add(string& table, map<string, string>& data) override {
 		cout <<"INSIDE add\n";
+		try {
+			if (clear(table)) return -1;
+			string sqlquery = "insert into " + table + " (";
+			for (auto& it : data) { 
+				if (clear(it.first)) return -1;
+				sqlquery += it.first + ", ";
+			}
+			sqlquery.pop_back();
+			sqlquery.pop_back();
+			sqlquery += ") values (";
 
-		if (clear(table)) return -1;
-		string sqlquery = "insert into " + table + " (";
-		mapstr :: iterator it;
+			for (auto& it : data) { 
+				if (clear(it.second)) return -1;
+				sqlquery += "\"" + it.second + "\", ";
+			}
+			sqlquery.pop_back();
+			sqlquery.pop_back();
+			sqlquery += ");";
+			cout <<"QUERY:: " << sqlquery << endl;
+			prstmt = con->prepareStatement(sqlquery);
+			prstmt->execute();
 
-
-		
-		for (auto& it : data) { 
-			if (clear(it.first)) return -1;
-			sqlquery += it.first + ", ";
+		} 
+		catch (sql::SQLException &e) {
+			cout << "# ERR: SQLException in " << __FILE__;
+			cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << endl;
+			cout << "# ERR: " << e.what();
+			cout << " (MySQL error code: " << e.getErrorCode();
+			cout << ", SQLState: " << e.getSQLState() << " )" << endl;
+			return -1;
 		}
-		sqlquery.pop_back();
-		sqlquery.pop_back();
-		sqlquery += ") values (";
-
-		for (auto& it : data) { 
-			if (clear(it.second)) return -1;
-			sqlquery += "\"" + it.second + "\", ";
-		}
-		sqlquery.pop_back();
-		sqlquery.pop_back();
-		
-		sqlquery += ");";
-
-		cout <<"QUERY:: " << sqlquery << endl;
-
-		prstmt = con->prepareStatement(sqlquery);
-		prstmt->execute();
-
-		//stmt->execute(sqlquery);
-
+		cout << endl;
 		return 0;
-
 	};
 
 	int Delete(const string& table, string condition) override {
@@ -116,7 +111,6 @@ public:
 		if (clear(condition, false)) return -1;
 		string sqlquery = "delete from " + table + " where " + condition + ";";
 		cout <<"QUERY:: " << sqlquery << endl;
-		//stmt->execute(sqlquery);
 		prstmt = con->prepareStatement(sqlquery);
 		prstmt->execute();
 		return 0;
@@ -126,7 +120,7 @@ public:
 	int Edit(string& table, mapstr& newData, string condition) override {
 		if (clear(table)) return -1;
 		string sqlquery = "update " + table + " set ";
-		//mapstr :: iterator it;
+		
 		for (auto& it : newData) { 
 			if (clear(it.first) || clear(it.second)) return -1;
 			sqlquery += it.first +" = \"" + it.second + "\", ";
@@ -158,53 +152,36 @@ public:
 		sqlquery.pop_back();
 		sqlquery.pop_back();
 
-		sqlquery += " from " + table;// +";";
+		sqlquery += " from " + table;
 		if (condition != "") sqlquery += " where " + condition;
-		sqlquery += + " order by " + *cols.begin() + ";";
-
+		sqlquery += + " order by " + *cols.begin();
+		string existquery = "select count(*) from (" + sqlquery + ") as tab";
+		sqlquery+= ";";
+		cout <<"COUNT:: " << existquery << endl;
+		
+		prstmt = con->prepareStatement(existquery);
+		res = prstmt->executeQuery();
+		res->next();
+		int exist = res->getInt("count(*)");
+		if (!exist) {
+			cout << "NOT FOUND!\n";
+			return vector<mapstr>(0);
+		}
 		cout <<"QUERY:: " << sqlquery << endl;
-		bool exist = false;
-		//try {
-			//select count(*) from (select * from user where iduser = 10) as tab;
-		//res = stmt->executeQuery(sqlquery);
+
 		prstmt = con->prepareStatement(sqlquery);
 		res = prstmt->executeQuery();
-		exist = res->next();
-		cout <<"EXIST: " << exist <<endl;
-		if (!exist) {
-			cout <<"NOT EXIST\n";
-				
-		}
-		else {
 			cout <<"EXIST\n";
 			res->beforeFirst();
-			//cout << res->isNull(1) <<endl;
 			while (res->next()) {
-				cout <<"IN\n";
 				mapstr buffer = mapstr();
 				for (auto& it : cols) {
 					string temp = res->getString(it);
-
-					cout <<"RES: " << res->wasNull() <<endl;
-					buffer[it] = temp;
-						//cout << it << endl;
-						//answer[it].push_back(temp);
-						//cout << " " << temp;
-						
+					buffer[it] = temp;		
 				}
 				answer.push_back(buffer);
-					//cout << endl;
-						}
-					//}
-					//else {
-					//	cout<<"EMPTY";
-					//	return {};
-						
-					//}
-				
+			}
 			cout << endl;
-				
-		}
 		cout <<"END\n";
 		return answer;	
 	};
@@ -542,18 +519,115 @@ public:
 
 		return 0;
 	};
-	void DeleteFilm(int id);
-	void EditFilm(int id, mapstr data);
-	mapstr GetFilmInfo(int id, vecstr cols);
-	void RecountRate();
-	vecstr GetFilmsId(mapstr condition);
-private:
+	int DeleteFilm(int id) {
+		string table = "film";
+		string condition = "idfilm = " + to_string(id);
+		if (conn->Delete(table, condition)) {
+			cout << "Film deleting fail!\n";
+			return -1;
+		};
+		return 0;
+	};
 
-	vecstr GetFilmGenre(int filmid);
-	void AddFilmDetail(string filmid, string table, vecstr data);
-	vecstr GetFilmActor(int filmid);
-	//void AddFilmActor(int filmid, string name);
-	void RecountRateFilm(int id);
-	int FindActor(string name);
+	int EditFilm(int id, mapstr data) {
+		string table = "film";
+		string condition = "idfilm = " + to_string(id);
+		if (conn->Edit(table, data, condition)) {
+			cout << "Film editing fail!\n";
+			return -1;
+		};
+		return 0;
+	};
+
+	mapstr GetFilmInfo(int id, vecstr cols) {
+		string table = "film";
+		string condition = " idfilm = " + to_string(id);
+		mapstr filminfo = conn->Get(table, cols, condition)[0];
+		return filminfo;
+	};
+
+	int RecountRate() {
+		vecstr allfilms = GetFilmId();
+		for (auto& filmid : allfilms) {
+			RecountRateFilm(stoi(filmid));
+		}
+		
+	};
+
+	vecstr GetFilmId(string condition="") {
+		string table = "film";
+		vecstr cols = {"idfilm"};
+		vector<mapstr> ids = conn->Get(table, cols, condition);
+		vecstr idlist(0);
+		for (auto& it : ids) {
+			idlist.push_back(it["idfilm"]);
+		}
+		return idlist;
+	};
+
+//private:
+
+	void AddFilmDetail(string filmid, string table, vecstr data) {
+		cout << "ADDING\n";
+		if (data.size()){
+			cout << "ADDING\n";
+			for (auto& item : data) {
+				if (FindDetail(table, item) == -1) {
+					cout << "ADDING\n";
+					mapstr temp = {{table + "name", item}};
+					conn->Add(table, temp);
+				}
+				int id = FindDetail(table, item);
+				cout << "ID: " <<id <<endl;
+				//count <<
+				string tab = "film_has_" + table;
+				mapstr connectid = {{"film_idfilm", filmid}, {table + "_id" + table, to_string(id)}};
+				conn->Add(tab, connectid);
+			}
+		}
+	};
+	
+	int RecountRateFilm(int id) {
+		string table = "estimation";
+		string condition = "film_idfilm = " + to_string(id);
+		vecstr cols = {"estimate"};
+		vector<mapstr> estimates = conn->Get(table, cols, condition);
+		float mean;
+		for (auto& est : estimates) {
+			mean += stoi(est["estimate"]);
+		}
+		mean = mean / estimates.size();
+		mapstr edit = {{"rate", to_string(mean)}};
+		if (EditFilm(id, edit)) {
+			cout << "Film editing fail!\n";
+			return -1;
+		};
+		return 0;
+	};
+
+	int FindDetail(string& table, string& name) {
+		vecstr cols = {"id" + table};
+		//string condition = 
+		vector<mapstr> answer = conn->Get(table, cols, " " + table + "name = \"" + name + "\"" );
+		if (!answer.size()) {
+			cout <<"ZERO ANSWER\n";
+			return -1;
+		}
+		cout << "SIZE: " << answer.size() << endl;
+		int res = stoi((conn->Get(table, cols, " " + table + "name = \"" + name + "\"")[0][cols[0]]));
+		cout <<"ID: " << res <<"\n";
+		return res;
+	}
+	int DeleteDetail(string& table, string filmid, string detailid) {
+		string condition = "film_idfilm = " + filmid + " and " + table + "_id" + table + " = \"" + detailid + "\"";
+		string tab = "film_has_" + table;
+		if (conn->Delete(table, condition)) {
+			cout << "Detail deleting fail!\n";
+			return -1;
+		};
+		return 0;
+		
+	}
+	;
 };
 
