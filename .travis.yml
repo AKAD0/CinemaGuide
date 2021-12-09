@@ -1,0 +1,36 @@
+dist:     focal
+sudo:     required
+
+language: c
+
+os:
+  - linux
+
+compiler:
+  - gcc
+
+addons:
+  apt:
+    packages:
+      - cmake
+      - lcov
+      - gcovr
+
+install:
+  - sudo apt-get install valgrind
+  - sudo pip3 install cpplint
+  - sudo apt install cppcheck
+
+before_script:
+  - sudo cmake CMakeLists.txt && sudo make
+  - cd "${TRAVIS_BUILD_DIR}"/
+  - sudo mkdir build && cd build
+  - sudo cmake ..
+  - sudo make
+
+script:
+  - cpplint --extensions=c,cpp HW_2/project/src/main.c HW_2/project/include/foo.h HW_2/tests/main.cpp
+  - cppcheck --enable=warning,performance,portability,style --language=c++ ./
+  - valgrind --track-origins=yes --child-silent-after-fork=yes --leak-check=full "${TRAVIS_BUILD_DIR}"/build/TEST
+  - cd "${TRAVIS_BUILD_DIR}"/project/src
+  - bash <(curl -s https://codecov.io/bash)
