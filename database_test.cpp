@@ -6,12 +6,6 @@
 
 
 // CONNECTORMYSQL
-
-TEST(ConnectorMySql_create, Assert_True) {
-  ConnectorMySql testcon("localhost", "vladimir", "12345678", "Kinopoiskdata", 3306);
-  EXPECT_TRUE(true);
-}
-
 TEST(ConnectorMySql_Add_Get, Assert_True) {
   ConnectorMySql testcon("localhost", "vladimir", "12345678", "Kinopoisdata", 3306);
   string table = "user";
@@ -21,19 +15,11 @@ TEST(ConnectorMySql_Add_Get, Assert_True) {
     {"password", "1899"}
   };
   testcon.Add(table, data);
-
   vecstr columns = {"email", "username", "password"};
-
   string condition = "username = \"Lionel Messi\"";
   mapstr result = testcon.Get(table, columns, condition)[0];
-
-
-
   EXPECT_EQ(data, result);
-
   testcon.Delete(table, condition);
-
-  //EXPECT_TRUE(true);
 }
 
 TEST(ConnectorMySql_Delete, Assert_True) {
@@ -45,17 +31,11 @@ TEST(ConnectorMySql_Delete, Assert_True) {
     {"password", "1899"}
   };
   testcon.Add(table, data);
-
   vecstr columns = {"email", "username", "password"};
-
   string condition = "username = \"Lionel Messi\"";
-
   testcon.Delete(table, condition);
-
-  mapstr result {};// = testcon.Get(table, columns, condition)[0];
-
-  mapstr exp = {};
-  EXPECT_EQ(exp, result);
+  vector<mapstr> result = testcon.Get(table, columns, condition);
+  EXPECT_FALSE(result.size());
 }
 
 TEST(ConnectorMySql_Edit, Assert_True) {
@@ -129,8 +109,8 @@ TEST(UserConnector_DeleteUser, Assert_True) {
   vecstr columns = {"email", "username", "password"};
   string id = testcon.GetUserId(username);
   testcon.DeleteUser(stoi(id));
-  mapstr result = {};//testcon.GetUserInfo(stoi(id), columns);
-  EXPECT_EQ(data, result);
+  mapstr result = testcon.GetUserInfo(stoi(id), columns);
+  EXPECT_FALSE(result.size());
   
   
 }
@@ -319,71 +299,129 @@ TEST(UserConnector_FindUserEstimation, Assert_True) {
   testcon.DeleteUser(stoi(id));
 }
 
-
 // FILMCONNECTION
-/*
-TEST(FilmConnector_create, Assert_True) {
-  FilmConnector x("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
-  EXPECT_TRUE(true);
-}
 
 TEST(FilmConnector_AddFilm, Assert_True) {
-  EXPECT_TRUE(true);
+  mapstr data = {
+    {"filmname", "Testfilm"},
+    {"year", "2015"},
+    {"country", "USA"},
+    {"director", "gamer"},
+    {"format", "full"}
+  };
+  FilmConnector testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  string filmname = "Testfilm";
+	int year = 2015;
+	string country = "USA";
+	string format = "full";
+	string director = "gamer";
+	testcon.AddFilm(filmname, year, country, format, director);
+  
+  string condition = " filmname = \"Testfilm\"";
+  string id = testcon.GetFilmId(condition)[0];
+  vecstr columns = {"filmname", "year", "director", "country", "format" };
+  
+  mapstr result = testcon.GetFilmInfo(stoi(id), columns);
+  EXPECT_EQ(data, result);
+  testcon.DeleteFilm(stoi(id));
 }
 
 
 TEST(FilmConnector_DeleteFilm, Assert_True) {
-  EXPECT_TRUE(true);
+  FilmConnector testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  string filmname = "Testfilm";
+	int year = 2015;
+	string country = "USA";
+	string format = "full";
+	string director = "gamer";
+	testcon.AddFilm(filmname, year, country, format, director);
+  string condition = " filmname = \"Testfilm\"";
+  vecstr columns = {"filmname", "year", "director", "country", "format" };
+  string id = testcon.GetFilmId(condition)[0];
+  testcon.DeleteFilm(stoi(id));
+  mapstr result = testcon.GetFilmInfo(stoi(id), columns);
+  EXPECT_FALSE(result.size());
 }
 
 
 TEST(FilmConnector_EditFilm, Assert_True) {
-  EXPECT_TRUE(true);
-}
-
-TEST(FilmConnector_GetFilmInfo, Assert_True) {
-  EXPECT_TRUE(true);
-}
-
-
-TEST(FilmConnector_RecountRate, Assert_True) {
-  EXPECT_TRUE(true);
-}
-
-
-TEST(FilmConnector_GetFilmsId, Assert_True) {
-  EXPECT_TRUE(true);
-}
-
-
-TEST(FilmConnector_GetFilmGenre, Assert_True) {
-  EXPECT_TRUE(true);
-}
+  mapstr data = {
+    {"filmname", "Testfilm2"},
+    {"year", "2015"},
+    {"country", "USA"},
+    {"director", "gamer"},
+    {"format", "full"}
+  };
+  FilmConnector testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  string filmname = "Testfilm";
+	int year = 2015;
+	string country = "USA";
+	string format = "full";
+	string director = "gamer";
+	testcon.AddFilm(filmname, year, country, format, director);
+  
+  string condition = " filmname = \"Testfilm\"";
+  string id = testcon.GetFilmId(condition)[0];
+  vecstr columns = {"filmname", "year", "director", "country", "format" };
 
 
-TEST(FilmConnector_AddFilmGenre, Assert_True) {
-  EXPECT_TRUE(true);
-}
-
-
-TEST(FilmConnector_GetFilmActor, Assert_True) {
-  EXPECT_TRUE(true);
-}
-
-TEST(FilmConnector_AddFilmActor, Assert_True) {
-  EXPECT_TRUE(true);
+  mapstr newdata = {{"filmname", "Testfilm2"}};
+  testcon.EditFilm(stoi(id), newdata);
+  
+  mapstr result = testcon.GetFilmInfo(stoi(id), columns);
+  EXPECT_EQ(data, result);
+  testcon.DeleteFilm(stoi(id));
 }
 
 
-TEST(FilmConnector_RecountRateFilm, Assert_True) {
-  EXPECT_TRUE(true);
+TEST(FilmConnector_AddFilmDetail, Assert_True) {
+  FilmConnector testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  string filmname = "Testfilm";
+	int year = 2015;
+	string country = "USA";
+	string format = "full";
+	string director = "gamer";
+	testcon.AddFilm(filmname, year, country, format, director);
+  
+  string condition = " filmname = \"Testfilm\"";
+  string id = testcon.GetFilmId(condition)[0];
+
+  string table = "genre";
+  vecstr genres = {"art", "action"};
+  testcon.AddFilmDetail(id, table, genres);
+
+  vecstr filmactors = testcon.GetDetail(id, table);
+	for (auto& act : filmactors) {
+		cout << act << endl;
+	}
+  
+  EXPECT_EQ(genres, filmactors);
+  testcon.DeleteFilm(stoi(id));
 }
 
+TEST(FilmConnector_DeleteFilmDetail, Assert_True) {
+  FilmConnector testcon("localhost", "vladimir", "12345678", "Kinopoiskdb", 3306);
+  string filmname = "Testfilm";
+	int year = 2015;
+	string country = "USA";
+	string format = "full";
+	string director = "gamer";
+	testcon.AddFilm(filmname, year, country, format, director);
+  
+  string table = "genre";
+  vecstr genres = {"art", "action"};
+  vecstr expected = {"action"};
+  string condition = " filmname = \"Testfilm\"";
+  string id = testcon.GetFilmId(condition)[0];
 
-TEST(FilmConnector_FindActor, Assert_True) {
-  EXPECT_TRUE(true);
+  testcon.AddFilmDetail(id, table, genres);
+  testcon.DeleteDetail(table, id, genres[0]);
+  vecstr filmactors = testcon.GetDetail(id, table);
+
+  EXPECT_EQ(expected, filmactors);
+  testcon.DeleteFilm(stoi(id));
 }
-*/
+
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

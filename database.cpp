@@ -34,9 +34,6 @@ bool clear(string str, bool quotes=true) {
 		stops.push_back("\"");
 		stops.push_back("'");
 	}
-	if (quotes) {
-
-	}
     for (auto& key : stops) {
         if (str.find(key) < str.size()) {
 			cout << str << ": " << "INJECTION\n" << "position: " << str.find(key);;
@@ -44,7 +41,6 @@ bool clear(string str, bool quotes=true) {
 		}
     }
     return false;
-
 }
 
 class ConnectorMySql:public ConnectorDb {
@@ -127,14 +123,10 @@ public:
 		}
 		sqlquery.pop_back();
 		sqlquery.pop_back();
-
 		sqlquery += " where ";
 		if (clear(condition, false)) return -1;
 		sqlquery += condition + ";";
-
 		cout <<"QUERY:: " << sqlquery << endl;
-		
-		//stmt->execute(sqlquery);
 		prstmt = con->prepareStatement(sqlquery);
 		prstmt->execute();
 		return 0;
@@ -155,7 +147,7 @@ public:
 		sqlquery += " from " + table;
 		if (condition != "") sqlquery += " where " + condition;
 		sqlquery += + " order by " + *cols.begin();
-		string existquery = "select count(*) from (" + sqlquery + ") as tab";
+		string existquery = "select count(*) from (" + sqlquery + ") as tab;";
 		sqlquery+= ";";
 		cout <<"COUNT:: " << existquery << endl;
 		
@@ -166,6 +158,7 @@ public:
 		if (!exist) {
 			cout << "NOT FOUND!\n";
 			return vector<mapstr>(0);
+			cout << "AFTER\n";
 		}
 		cout <<"QUERY:: " << sqlquery << endl;
 
@@ -211,7 +204,6 @@ public:
 	UserConnector(const string& host, const string& usr, const string& psw, const string& db, const int port) { 
 		ConnectorMySql* buffer = new ConnectorMySql(host, usr, psw, db, port);
 		conn = buffer;
-		//*conn = ConnectorMySql(host, usr, psw, db, port);
 		cout << "USER CREATED\n";
 	}
 	~UserConnector() {
@@ -236,24 +228,17 @@ public:
 			cout << "User adding fail!\n";
 			return -1;
 		};
-
 		string condition = "username = \"" + data["username"] + "\"";
 		vecstr userid = {"iduser"};
-
 		vector<mapstr> res = conn->Get(table, userid, condition);
 		string id = res[0]["iduser"];
-
 		cout << id << endl;
-
 		if (genre.size()) {
 			AddUserPreference(id, "genre", genre);
 		}
-
 		if (director.size()) {
-			AddUserPreference(id, "director", director);
-			
+			AddUserPreference(id, "director", director);	
 		}
-
 		if (format.size()) {
 			AddUserPreference(id, "format", format);
 			
@@ -275,7 +260,6 @@ public:
 		string table = "user";
 		string condition = "username = \"" + username + "\"";
 		vecstr userid = {"iduser"};
-
 		vector<mapstr> res = conn->Get(table, userid, condition);
 		string id = res[0]["iduser"];
 		return id;
@@ -295,8 +279,10 @@ public:
 	mapstr GetUserInfo(int id, vecstr cols) {
 		string table = "user";
 		string condition = " iduser = " + to_string(id);
-		mapstr userinfo = conn->Get(table, cols, condition)[0];
-		//mapstr m;
+		vector<mapstr> answer = conn->Get(table, cols, condition);
+		mapstr userinfo{};
+		if (!answer.size()) return userinfo;
+		userinfo = answer[0];
 		return userinfo;
 	};
 
@@ -364,46 +350,51 @@ public:
 		vecstr cols = {"iduser"};
 		vector<mapstr> ids = conn->Get(table, cols, condition);
 		vecstr idlist(0);
+		if (!ids.size()) return idlist;
 		for (auto& it : ids) {
 			idlist.push_back(it["iduser"]);
 		}
 		return idlist;
 	};
 
-	map<string, vector<string>> GetDataFrame() {
+	vector<multimap<string, string>> GetDataFrame() {
 		string table = "user"; 
-		vecstr cols = {"iduser", "age", "gender"};
-		map<string, vector<string>> df;
-
-		vector<map<string, vecstr>> dataframe;
-
-		vector<mapstr> userbase = conn->Get(table, cols);
-
-		// add base fileds
+		vecstr basecols = {"iduser", "age", "gender"};
+		vector<multimap<string, string>> df;
+		// get base info about all users
+		vector<mapstr> userbase = conn->Get(table, basecols);
 		for (auto& row : userbase) {
-			map<string, vecstr> temp;
-			temp["iduser"] = {row["iduser"]};
-			temp["age"] = {row["age"]};
-			temp["age"] = {row["age"]};
+			// add base fileds
+			multimap<string, string> temp;
+			pair<string, string> temp_pair = make_pair("iduser", row["iduser"]);
+			temp.insert(temp_pair);
+			temp_pair = make_pair("age", row["age"]);
+			temp.insert(temp_pair);
+			temp_pair = make_pair("gender", row["gender"]);
+			temp.insert(temp_pair);
 
+			// add preferences
+			vector<mapstr> pref = GetUserPreference(stoi(row["iduser"]));
 
-			// add preferences ????????????????????//
-
-			// add estimations
-			temp["estimate"] = vecstr(0);
-
-			vector<mapstr> estimates = GetUserEstimate(stoi(row["iduser"]));
-			for (auto& pair : estimates) {
-				temp["estimate"].push_back(pair["film_idfilm"] + " " + pair["estimate"]);
+			for (auto& pr : pref) {
+				for (auto& couple : pr) {
+					temp.insert(couple);
+				}
 			}
-			dataframe.push_back(temp);
-		}
+			
+			// add estimations
+			vector<mapstr> est = GetUserEstimate(stoi(row["iduser"]));
 
-		
+			for (auto& es : est) {
+				for (auto& couple : es) {
+					temp.insert(couple);
+				}
+			}
+			df.push_back(temp);
+		}
 		return df;
 	};
 
-//private:
 	int AddUserPreference(string userid, string tab, vecstr data) {
 		string table = "preference_" + tab;
 		for (auto& it : data) {
@@ -414,7 +405,6 @@ public:
 					cout << "Adding user preference fail!\n";
 					return -1;
 				}
-				
 			}
 		return 0;
 	};
@@ -473,13 +463,14 @@ public:
 	FilmConnector(const string& host, const string& usr, const string& psw, const string& db, const int port) {
         ConnectorMySql* buffer = new ConnectorMySql(host, usr, psw, db, port);
 		conn = buffer;
-		//*conn = ConnectorMySql(host, usr, psw, db, port);
 		cout << "FILM CREATED\n";
 	};
+
 	~FilmConnector() {
 		delete conn;
 		cout << "FILM DESTRUCTOR\n";
 	};
+
 	int AddFilm(string& filmname, int year, string& country, 
 				string format, string & director, float rate = 0, string description = "",
 				vecstr genre = { }, vecstr actor = { }, int idfilm = -1) {
@@ -502,23 +493,19 @@ public:
 
 		string condition = "filmname = \"" + data["filmname"] + "\"";
 		vecstr userid = {"idfilm"};
-
 		vector<mapstr> res = conn->Get(table, userid, condition);
 		string id = res[0]["idfilm"];
-
 		cout << id << endl;
-
-		/*if (genre.size()) {
+		if (genre.size()) {
 			AddFilmDetail(id, "genre", genre);
 		}
-
 		if (actor.size()) {
-			AddFilmDetail(id, "actor", actor);
-			
-		}*/
+			AddFilmDetail(id, "actor", actor);	
+		}
 
 		return 0;
 	};
+
 	int DeleteFilm(int id) {
 		string table = "film";
 		string condition = "idfilm = " + to_string(id);
@@ -542,16 +529,22 @@ public:
 	mapstr GetFilmInfo(int id, vecstr cols) {
 		string table = "film";
 		string condition = " idfilm = " + to_string(id);
-		mapstr filminfo = conn->Get(table, cols, condition)[0];
-		return filminfo;
+		vector<mapstr> filminfo = conn->Get(table, cols, condition);
+		if (!filminfo.size()) {
+			return mapstr{};
+		} 
+		return filminfo[0];
 	};
 
 	int RecountRate() {
 		vecstr allfilms = GetFilmId();
 		for (auto& filmid : allfilms) {
-			RecountRateFilm(stoi(filmid));
+			if (RecountRateFilm(stoi(filmid))) {
+				cout <<"Rate recountig fail!\n";
+				return -1;
+			};
 		}
-		
+		return 0;
 	};
 
 	vecstr GetFilmId(string condition="") {
@@ -559,13 +552,18 @@ public:
 		vecstr cols = {"idfilm"};
 		vector<mapstr> ids = conn->Get(table, cols, condition);
 		vecstr idlist(0);
+		cout << "SIZE: " << ids.size() << endl;
+		if (!ids.size()) {
+			cout << "ZERO END\n";
+			return idlist;
+		}
 		for (auto& it : ids) {
 			idlist.push_back(it["idfilm"]);
 		}
+		
 		return idlist;
 	};
 
-//private:
 
 	void AddFilmDetail(string filmid, string table, vecstr data) {
 		cout << "ADDING\n";
@@ -579,14 +577,13 @@ public:
 				}
 				int id = FindDetail(table, item);
 				cout << "ID: " <<id <<endl;
-				//count <<
 				string tab = "film_has_" + table;
 				mapstr connectid = {{"film_idfilm", filmid}, {table + "_id" + table, to_string(id)}};
 				conn->Add(tab, connectid);
 			}
 		}
 	};
-	
+
 	int RecountRateFilm(int id) {
 		string table = "estimation";
 		string condition = "film_idfilm = " + to_string(id);
@@ -618,16 +615,46 @@ public:
 		cout <<"ID: " << res <<"\n";
 		return res;
 	}
-	int DeleteDetail(string& table, string filmid, string detailid) {
-		string condition = "film_idfilm = " + filmid + " and " + table + "_id" + table + " = \"" + detailid + "\"";
+	
+	int DeleteDetail(string& table, string filmid, string detail) {
+		string id = GetDetailId(table, detail);
+		string condition = "film_idfilm = " + filmid + " and " + table + "_id" + table + " = \"" + id + "\"";
 		string tab = "film_has_" + table;
-		if (conn->Delete(table, condition)) {
+		if (conn->Delete(tab, condition)) {
 			cout << "Detail deleting fail!\n";
 			return -1;
 		};
 		return 0;
 		
+	};
+
+	string GetDetailId(string& table, string& name) {
+		string condition = table + "name = \"" + name + "\"";
+		vecstr cols = {"id" + table};
+		vector<mapstr> answer = conn->Get(table, cols, condition);
+		string result = "-1";
+		if (answer.size()) result = answer[0][cols[0]];
+		return result;
 	}
-	;
+
+	vecstr GetDetail(string filmid, string& table) {
+		vecstr result(0);
+		string condition = "film_idfilm = " + filmid;
+		string tab = "film_has_" + table;
+		string field = table + "_id" + table;
+		vecstr cols = {field};
+		vecstr cols_detail = {table + "name"};
+		vector<mapstr> list = conn->Get(tab, cols, condition);
+		vecstr ids(0);
+		for (auto& mapa : list) {
+			string cond = "id" + table + " = " + mapa[field];
+			vector<mapstr> answer = conn->Get(table, cols_detail, cond);
+			if (answer.size()) {
+				result.push_back(answer[0][cols_detail[0]]);
+			}
+		}
+		return result;
+	}
+
 };
 
