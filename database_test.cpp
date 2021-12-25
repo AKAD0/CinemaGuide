@@ -1,6 +1,10 @@
-#include "database.cpp"
 #include <chrono>
 #include <gtest/gtest.h>
+#include "./include/connector.h"
+#include "./include/connectorDB.h"
+#include "./include/connectorMysql.h"
+#include "./include/userConnector.h"
+#include "./include/filmConnector.h"
 #define private public
 
 // CONNECTORMYSQL
