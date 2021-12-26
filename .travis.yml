@@ -1,0 +1,31 @@
+dist: focal
+
+langauge: cpp
+
+os:
+    - linux
+
+compiler:
+    - gcc
+
+install:
+    - sudo apt update
+    - sudo apt install build-essential
+    - sudo apt install libgtest-dev
+    - sudo apt-get install cmake
+    - sudo apt-get install -y valgrind
+    - sudo apt-get install -y gcovr
+    - sudo apt install lcov
+    - sudo apt install cppcheck
+
+
+script:
+    - mkdir build
+    - cd build
+    - cmake ..
+    - make
+    - valgrind --leak-check=yes --error-exitcode=33 -s ./database_test
+    - cppcheck --enable=all --inconclusive --library=posix ../database.cpp
+    - cppcheck --enable=all --inconclusive --library=posix ../database_test.cpp
+    - rm -rf *
+
