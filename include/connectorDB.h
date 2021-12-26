@@ -15,9 +15,12 @@ public:
   ConnectorDb(const ConnectorDb &) = delete;
   ConnectorDb &operator=(const ConnectorDb &) = default;
   virtual ~ConnectorDb() = default;
-  virtual int Add(string &table, mapstr &data) = 0;
-  virtual int Delete(const string &table, string condition) = 0;
-  virtual int Edit(string &table, mapstr &newData, string condition) = 0;
-  virtual vector<mapstr> Get(string &table, vecstr &cols,
-                             string condition = "") = 0;
+
+
+  virtual int Add(const string &table, const map<string, string> &data) = 0;
+  virtual int Delete(const string &table, const string& condition) = 0;
+  virtual int Edit(const string &table, const mapstr &newData, const string& condition) = 0;
+  virtual vector<mapstr> Get(const  string &table, const  vecstr &cols, string condition = "") = 0;
+
+
 };

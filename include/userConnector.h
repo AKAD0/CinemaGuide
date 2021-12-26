@@ -16,23 +16,23 @@ public:
   UserConnector(const string &host, const string &usr, const string &psw,
                 const string &db, const int port);
 
-  ~UserConnector();
+  ~UserConnector() = default;
 
-  int AddUser(string &email, string &username, string &password,
+  int AddUser(const string &email, const string &username, const string &password,
               string gender = "", int age = -1, vecstr format = {},
               vecstr genre = {}, vecstr director = {}, int iduser = -1);
 
   int DeleteUser(int id);
 
-  string GetUserId(string &username);
+  string GetUserId(const string &username);
 
-  int EditUser(int id, mapstr data);
+  int EditUser(int id, const mapstr& data);
 
-  mapstr GetUserInfo(int id, vecstr cols);
+  mapstr GetUserInfo(int id, const vecstr& cols);
 
   int EstimateFilm(int userid, int film, int estimate);
 
-  int CommentFilm(int userid, int filmid, string text);
+  int CommentFilm(int userid, int filmid, const string& text);
 
   vecstr GetCommentsFilm(int userid, int filmid);
 
@@ -44,9 +44,9 @@ public:
 
   vector<multimap<string, string>> GetDataFrame();
 
-  int AddUserPreference(string userid, string tab, vecstr data);
+  int AddUserPreference(const string& userid, const string& tab, const vecstr& data);
 
-  int DeleteUserPreference(int id, multimap<string, string> data);
+  int DeleteUserPreference(int id, const multimap<string, string>& data);
 
   vector<mapstr> GetUserPreference(int id);
 

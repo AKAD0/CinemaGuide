@@ -17,7 +17,7 @@ using namespace std;
 typedef map<string, string> mapstr;
 typedef vector<string> vecstr;
 
-bool clear(string str, bool quotes = true);
+bool clear(const string& str, bool quotes = true);
 
 
 
@@ -26,20 +26,19 @@ public:
   ConnectorMySql(const string &host, const string &usr, const string &psw,
                  const string &db, const int port);
 
-  ~ConnectorMySql();
+  ~ConnectorMySql() = default;
 
-  int Add(string &table, map<string, string> &data) override;
+  int Add(const string &table, const map<string, string> &data) override;
 
-  int Delete(const string &table, string condition) override;
+  int Delete(const string &table, const string& condition) override;
 
-  int Edit(string &table, mapstr &newData, string condition) override;
+  int Edit(const string &table, const mapstr &newData, const string& condition) override;
 
-  vector<mapstr> Get(string &table, vecstr &cols,
-                     string condition = "") override;
+  vector<mapstr> Get(const  string &table, const  vecstr &cols, string condition = "") override;
 private:
-  sql::Driver *driver;
-  sql::Connection *con;
-  sql::ResultSet *res = nullptr;
-  sql::Statement *stmt;
-  sql::PreparedStatement *prstmt = nullptr;
+  sql::Driver *driver; //incompatible with smart pointers: https://stackoverflow.com/questions/17176122/how-to-combine-sqldriver-with-smart-pointers
+  unique_ptr<sql::Connection> con;
+  unique_ptr<sql::ResultSet> res;
+  unique_ptr<sql::Statement> stmt;
+  unique_ptr<sql::PreparedStatement> prstmt;
 };

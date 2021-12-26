@@ -11,6 +11,8 @@
 
 #include <vector>
 
+#include <memory>
+
 #include "connectorDB.h"
 
 using namespace std;
@@ -28,5 +30,5 @@ public:
   ~Connector() = default;
 
 protected:
-  ConnectorDb *conn;
+  std::unique_ptr<ConnectorDb> conn;
 };
